@@ -1,7 +1,7 @@
 # Use an official Python runtime as the base image
 FROM python:3.11-slim
 
-# Set working directory
+# Set the working directory inside the container
 WORKDIR /backend
 
 # Install system dependencies (including PortAudio)
@@ -10,14 +10,14 @@ RUN apt-get update && apt-get install -y \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements.txt to the container
-COPY requirements.txt .
+# Copy only the necessary files from the backend directory
+COPY backend/requirements.txt .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of your application code
-COPY . .
+# Copy the rest of the backend application code
+COPY backend/ .  
 
 # Set environment variables (optional, adjust as needed)
 ENV PYTHONUNBUFFERED=1
