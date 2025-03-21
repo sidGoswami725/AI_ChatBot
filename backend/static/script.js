@@ -150,7 +150,7 @@ recordButton.addEventListener('click', async function recordHandler() {
         };
 
         mediaRecorder.start();
-        recordingStatus.textContent = 'Recording... (Click again to stop)';
+        // recordingStatus.textContent = 'Recording... (Click again to stop)';
         recordButton.disabled = false;
 
         // Auto-stop after 15 seconds
