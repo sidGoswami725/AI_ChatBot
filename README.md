@@ -1,5 +1,5 @@
 # Character Chatbot
-[DALL-BOT(Deployement link)](https://ai-chatbot-1-h7qz.onrender.com)
+[DALL-BOT(Deployment link)](https://ai-chatbot-1-h7qz.onrender.com)
 
 A Flask-based interactive chatbot application that lets users engage in conversations with AI-powered characters through text or voice inputs.
 
