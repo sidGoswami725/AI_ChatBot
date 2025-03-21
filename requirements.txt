@@ -1,0 +1,14 @@
+firebase-admin==6.5.0
+python-dotenv==1.0.1
+flask==3.0.3
+google-auth==2.29.0
+google-cloud-storage==2.16.0
+google-cloud-bigquery==3.20.1
+requests==2.31.0
+pyaudio==0.2.14
+numpy==1.26.4
+scipy==1.13.0
+google-cloud-speech==2.26.0
+google-cloud-translate==3.15.3  
+google-cloud-texttospeech==2.16.4
+pydub==0.25.1

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with {{ character_name }}</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="chat-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1><a href="/" class="sidebar-link">Chat Characters</a></h1>
+            </div>
+            <div class="sidebar-content">
+                <div class="character-group">
+                    <div class="character-images">
+                        <div class="character-item">
+                            <a href="/victor"><img src="/static/victor.jpeg" alt="Victor Graves" class="character-image"></a>
+                            <span class="character-name">Victor Graves</span>
+                        </div>
+                        <div class="character-item">
+                            <a href="/jax"><img src="/static/jax.jpeg" alt="Jax Carter" class="character-image"></a>
+                            <span class="character-name">Jax Carter</span>
+                        </div>
+                        <div class="character-item">
+                            <a href="/elias"><img src="/static/elias.jpeg" alt="Elias Sterling" class="character-image"></a>
+                            <span class="character-name">Elias Sterling</span>
+                        </div>
+                        <div class="character-item">
+                            <a href="/lila"><img src="/static/lila.jpeg" alt="Lila Moreau" class="character-image"></a>
+                            <span class="character-name">Lila Moreau</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="selector-group">
+                    <label for="languageSelect">Language:</label>
+                    <select id="languageSelect">
+                        <option value="en-US">English</option>
+                        <option value="hi-IN">Hindi</option>
+                        <option value="ta-IN">Tamil</option>
+                        <option value="kn-IN">Kannada</option>
+                        <option value="te-IN">Telugu</option>
+                        <option value="ml-IN">Malayalam</option>
+                        <option value="bn-IN">Bengali</option>
+                        <option value="mr-IN">Marathi</option>
+                        <option value="gu-IN">Gujarati</option>
+                        <option value="pa-IN">Punjabi</option>
+                        <option value="ur-IN">Urdu</option>
+                        <option value="ja-JP">Japanese</option>
+                        <option value="fr-FR">French</option>
+                        <option value="de-DE">German</option>
+                        <option value="es-ES">Spanish</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="main-content">
+            <div class="chat-header">
+                <h1>Chat with {{ character_name }}</h1>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="character-showcase" id="characterShowcase">
+                    <div class="character-display" data-character="{{ character_id }}">
+                        <img src="/static/{{ character_id }}.jpeg" alt="{{ character_name }}" class="showcase-image">
+                        <div class="character-info">
+                            <h2>{{ character_title }}</h2>
+                            <p>{{ character_description }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="chat-input">
+                <button id="recordButton"><img src="/static/mic_button.png" alt="Record" class="button-icon"></button>
+                <input type="text" id="textInput" placeholder="Type your message...">
+                <button id="sendButton"><img src="/static/send_button.png" alt="Send" class="button-icon"></button>
+                <button id="clearChatButton">Clear Chat</button>
+            </div>
+            <div id="recordingStatus" class="recording-status"></div>
+            <div id="error" style="display: none; color: red;"></div>
+        </div>
+    </div>
+
+    <script>
+        const initialConversation = {{ conversation|tojson|safe }};
+        const selectedCharacter = '{{ character_id }}';
+        const ipAddress = '{{ ip_address }}';
+    </script>
+    <script src="/static/script.js"></script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'923dd58a4c58bfc4',t:'MTc0MjU2NDE0My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
