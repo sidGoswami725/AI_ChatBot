@@ -337,16 +337,16 @@ recordButton.addEventListener('click', async () => {
 
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' }); // Use WebM for broader compatibility
 
         mediaRecorder.ondataavailable = (event) => {
             audioChunks.push(event.data);
         };
 
         mediaRecorder.onstop = async () => {
-            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' }); // Match the recording format
             const formData = new FormData();
-            formData.append('audio', audioBlob, `recorded_audio_${Date.now()}.wav`);
+            formData.append('audio', audioBlob, `recorded_audio_${Date.now()}.webm`); // Use .webm extension
             formData.append('character', selectedCharacter);
             formData.append('language', languageSelect.value);
 
@@ -402,7 +402,6 @@ recordButton.addEventListener('click', async () => {
         recordingStatus.style.display = 'none';
     }
 });
-
 sendButton.addEventListener('click', async () => {
     const text = textInput.value.trim();
     if (!text) return;
