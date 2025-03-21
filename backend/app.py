@@ -329,6 +329,7 @@ from transcribe_audio import transcribe_audio
 from tts import text_to_speech, translate_text
 from gemini_api import get_character_response
 from firebase import cred
+import subprocess
 
 app = Flask(__name__)
 
@@ -430,6 +431,7 @@ def character_chat(character):
 def process_audio():
     synthesized_audio_path = None
     recorded_audio_path = None
+    converted_audio_path = None
     try:
         ip_address = request.remote_addr.replace('.', '_')
         character = request.form.get('character')
@@ -444,18 +446,27 @@ def process_audio():
 
         audio_file = request.files['audio']
         timestamp = str(time.time_ns())
-        recorded_audio_path = f"{UPLOAD_FOLDER}/recorded_audio_{timestamp}.wav"
+        recorded_audio_path = f"{UPLOAD_FOLDER}/recorded_audio_{timestamp}.webm"
         audio_file.save(recorded_audio_path)
         print(f"Received and saved audio to {recorded_audio_path}")
 
+        # Convert WebM to WAV using ffmpeg
+        converted_audio_path = f"{UPLOAD_FOLDER}/converted_audio_{timestamp}.wav"
+        subprocess.run([
+            'ffmpeg', '-y', '-i', recorded_audio_path, 
+            '-acodec', 'pcm_s16le', '-ar', '16000', '-ac', '1', 
+            converted_audio_path
+        ], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        print(f"Converted audio to {converted_audio_path}")
+
         recorded_blob_path = f"audio/{ip_address}_{character}/recorded_audio_{timestamp}.wav"
         recorded_blob = bucket.blob(recorded_blob_path)
-        recorded_blob.upload_from_filename(recorded_audio_path)
+        recorded_blob.upload_from_filename(converted_audio_path)  # Upload the converted WAV
         recorded_blob.make_public()
         recorded_audio_url = recorded_blob.public_url
         print(f"Uploaded recorded audio to {recorded_blob_path}: {recorded_audio_url}")
 
-        transcript = transcribe_audio(recorded_audio_path, language=selected_language)
+        transcript = transcribe_audio(converted_audio_path, language=selected_language)
         if not transcript:
             return jsonify({"error": "Transcription failed or no speech detected"}), 500
         print(f"Transcription successful: '{transcript}'")
@@ -501,6 +512,9 @@ def process_audio():
             "synthesized_audio_url": synthesized_audio_url,
             "conversation": conversation
         })
+    except subprocess.CalledProcessError as e:
+        print(f"FFmpeg conversion error: {e.stderr.decode()}")
+        return jsonify({"error": "Audio conversion failed"}), 500
     except Exception as e:
         import traceback
         print(f"Error in process_audio: {str(e)}")
@@ -509,6 +523,8 @@ def process_audio():
     finally:
         if recorded_audio_path and os.path.exists(recorded_audio_path):
             os.remove(recorded_audio_path)
+        if converted_audio_path and os.path.exists(converted_audio_path):
+            os.remove(converted_audio_path)
         if synthesized_audio_path and os.path.exists(synthesized_audio_path):
             os.remove(synthesized_audio_path)
 
