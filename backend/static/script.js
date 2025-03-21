@@ -77,82 +77,85 @@ function addMessage(content, isUser, character = selectedCharacter, audioUrl = n
 }
 
 recordButton.addEventListener('click', async () => {
-    recordButton.disabled = true;
-    recordingStatus.textContent = 'Recording...';
-    recordingStatus.style.display = 'block';
-    errorDiv.style.display = 'none';
-    const loadingDiv = await showLoading(true);
-
     let mediaRecorder;
     let audioChunks = [];
+    let isRecording = false;
 
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' }); // Use WebM for broader compatibility
+    if (!isRecording) {
+        // Start recording
+        recordButton.disabled = true;
+        recordingStatus.textContent = 'Recording...';
+        recordingStatus.style.display = 'block';
+        errorDiv.style.display = 'none';
+        const loadingDiv = await showLoading(true);
 
-        mediaRecorder.ondataavailable = (event) => {
-            audioChunks.push(event.data);
-        };
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+            isRecording = true;
 
-        mediaRecorder.onstop = async () => {
-            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' }); // Match the recording format
-            const formData = new FormData();
-            formData.append('audio', audioBlob, `recorded_audio_${Date.now()}.webm`); // Use .webm extension
-            formData.append('character', selectedCharacter);
-            formData.append('language', languageSelect.value);
+            mediaRecorder.ondataavailable = (event) => {
+                audioChunks.push(event.data);
+            };
 
-            try {
-                const response = await fetch('/process_audio', {
-                    method: 'POST',
-                    body: formData
-                });
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                const formData = new FormData();
+                formData.append('audio', audioBlob, `recorded_audio_${Date.now()}.webm`);
+                formData.append('character', selectedCharacter);
+                formData.append('language', languageSelect.value);
 
-                const data = await response.json();
+                try {
+                    const response = await fetch('/process_audio', {
+                        method: 'POST',
+                        body: formData
+                    });
 
-                if (response.ok) {
-                    addMessage(data.transcript, true, data.character, data.recorded_audio_url);
-                    addMessage(data.response, false, data.character, data.synthesized_audio_url);
-                } else {
-                    errorDiv.textContent = data.error || 'An error occurred while processing the audio.';
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        addMessage(data.transcript, true, data.character, data.recorded_audio_url);
+                        addMessage(data.response, false, data.character, data.synthesized_audio_url);
+                    } else {
+                        errorDiv.textContent = data.error || 'An error occurred while processing the audio.';
+                        errorDiv.style.display = 'block';
+                    }
+                } catch (err) {
+                    errorDiv.textContent = 'An error occurred: ' + err.message;
                     errorDiv.style.display = 'block';
+                } finally {
+                    removeLoading(loadingDiv);
+                    recordButton.disabled = false;
+                    recordingStatus.textContent = '';
+                    recordingStatus.style.display = 'none';
+                    recordButton.innerHTML = '<img src="/static/mic_button.png" alt="Record" class="button-icon">';
+                    stream.getTracks().forEach(track => track.stop());
+                    isRecording = false;
                 }
-            } catch (err) {
-                errorDiv.textContent = 'An error occurred: ' + err.message;
-                errorDiv.style.display = 'block';
-            } finally {
-                removeLoading(loadingDiv);
-                recordButton.disabled = false;
-                recordingStatus.textContent = '';
-                recordingStatus.style.display = 'none';
-                recordButton.innerHTML = '<img src="/static/mic_button.png" alt="Record" class="button-icon">';
-                stream.getTracks().forEach(track => track.stop());
-            }
-        };
+            };
 
-        mediaRecorder.start();
-        recordingStatus.textContent = 'Recording... (Click again to stop)';
+            mediaRecorder.start();
+            recordingStatus.textContent = 'Recording... (Click again to stop)';
+            recordButton.disabled = false; // Re-enable button to allow stopping
 
-        const stopRecording = () => {
+        } catch (err) {
+            errorDiv.textContent = 'Microphone access denied or unavailable: ' + err.message;
+            errorDiv.style.display = 'block';
+            removeLoading(loadingDiv);
+            recordButton.disabled = false;
+            recordingStatus.textContent = '';
+            recordingStatus.style.display = 'none';
+            isRecording = false;
+        }
+    } else {
+        // Stop recording
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
             mediaRecorder.stop();
-            recordButton.removeEventListener('click', stopRecording);
-        };
-        recordButton.addEventListener('click', stopRecording);
-
-        setTimeout(() => {
-            if (mediaRecorder.state !== 'inactive') {
-                mediaRecorder.stop();
-            }
-        }, 15000);
-
-    } catch (err) {
-        errorDiv.textContent = 'Microphone access denied or unavailable: ' + err.message;
-        errorDiv.style.display = 'block';
-        removeLoading(loadingDiv);
-        recordButton.disabled = false;
-        recordingStatus.textContent = '';
-        recordingStatus.style.display = 'none';
+            isRecording = false;
+        }
     }
 });
+
 sendButton.addEventListener('click', async () => {
     const text = textInput.value.trim();
     if (!text) return;
@@ -258,65 +261,3 @@ window.addEventListener('load', () => {
     isReloading = false;
     syncConversation(initialConversation);
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
