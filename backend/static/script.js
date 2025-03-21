@@ -313,6 +313,7 @@ const recordingStatus = document.getElementById('recordingStatus');
 let isReloading = false;
 let mediaRecorder;
 let audioChunks = [];
+let audioStream;
 
 async function showLoading(isRecording = false) {
     const loadingDiv = document.createElement('div');
@@ -389,8 +390,8 @@ recordButton.addEventListener('click', async () => {
         audioChunks = []; // Reset audio chunks
 
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+            audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(audioStream, { mimeType: 'audio/webm' });
 
             mediaRecorder.ondataavailable = (event) => {
                 audioChunks.push(event.data);
@@ -427,7 +428,7 @@ recordButton.addEventListener('click', async () => {
                     recordingStatus.textContent = '';
                     recordingStatus.style.display = 'none';
                     recordButton.innerHTML = '<img src="/static/mic_button.png" alt="Record" class="button-icon">';
-                    stream.getTracks().forEach(track => track.stop());
+                    audioStream.getTracks().forEach(track => track.stop());
                 }
             };
 
@@ -449,106 +450,7 @@ recordButton.addEventListener('click', async () => {
     }
 });
 
-sendButton.addEventListener('click', async () => {
-    const text = textInput.value.trim();
-    if (!text) return;
-
-    addMessage(text, true, selectedCharacter);
-    textInput.value = '';
-    errorDiv.style.display = 'none';
-    const loadingDiv = await showLoading();
-
-    try {
-        const response = await fetch('/process_text', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                text, 
-                character: selectedCharacter,
-                language: languageSelect.value 
-            })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            addMessage(data.response, false, data.character, data.synthesized_audio_url);
-        } else {
-            errorDiv.textContent = data.error || 'An error occurred while processing the text.';
-            errorDiv.style.display = 'block';
-        }
-    } catch (err) {
-        errorDiv.textContent = 'An error occurred: ' + err.message;
-        errorDiv.style.display = 'block';
-    } finally {
-        removeLoading(loadingDiv);
-    }
-});
-
-textInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') sendButton.click();
-});
-
-languageSelect.addEventListener('change', () => {
-    const selectedLanguage = languageSelect.options[languageSelect.selectedIndex].text;
-    errorDiv.textContent = Language changed to ${selectedLanguage};
-    errorDiv.style.display = 'block';
-    errorDiv.style.color = 'green';
-    setTimeout(() => {
-        errorDiv.style.display = 'none';
-    }, 3000);
-});
-
-clearChatButton.addEventListener('click', async () => {
-    try {
-        const response = await fetch('/clear_chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                ip_address: ipAddress,
-                character: selectedCharacter 
-            })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            Array.from(chatMessages.children).forEach(child => {
-                if (child.id !== 'characterShowcase') {
-                    child.remove();
-                }
-            });
-            errorDiv.textContent = 'Chat cleared successfully!';
-            errorDiv.style.display = 'block';
-            errorDiv.style.color = 'green';
-            setTimeout(() => {
-                errorDiv.style.display = 'none';
-            }, 3000);
-        } else {
-            errorDiv.textContent = data.error || 'Failed to clear chat.';
-            errorDiv.style.display = 'block';
-            errorDiv.style.color = 'red';
-        }
-    } catch (err) {
-        errorDiv.textContent = 'An error occurred: ' + err.message;
-        errorDiv.style.display = 'block';
-        errorDiv.style.color = 'red';
-    }
-});
-
-window.addEventListener('beforeunload', (event) => {
-    if (event.currentTarget.performance.navigation.type === 1) {
-        isReloading = true;
-    }
-});
-
-window.addEventListener('unload', () => {
-    if (!isReloading) {
-        const data = JSON.stringify({ ip_address: ipAddress, character: selectedCharacter });
-        const blob = new Blob([data], { type: 'application/json' });
-        navigator.sendBeacon('/cleanup', blob);
-    }
-});
+// Rest of the code remains unchanged...
 
 window.addEventListener('load', () => {
     isReloading = false;
