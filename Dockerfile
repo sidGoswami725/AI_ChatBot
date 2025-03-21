@@ -7,6 +7,7 @@ WORKDIR /backend
 # Install system dependencies (including PortAudio)
 RUN apt-get update && apt-get install -y \
     portaudio19-dev \
+    ffmpeg \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
