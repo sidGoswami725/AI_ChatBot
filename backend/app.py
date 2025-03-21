@@ -6,7 +6,7 @@ import signal
 from dotenv import load_dotenv
 import firebase_admin
 from firebase_admin import credentials, firestore, storage
-from record_audio import record_audio
+# from record_audio import record_audio
 from transcribe_audio import transcribe_audio
 from tts import text_to_speech, translate_text
 from gemini_api import get_character_response
@@ -113,31 +113,121 @@ def character_chat(character):
                          conversation=conversation,
                          ip_address=ip_address)
 
+# @app.route('/process_audio', methods=['POST'])
+# def process_audio():
+#     recorded_audio_path = None
+#     synthesized_audio_path = None
+#     try:
+#         ip_address = request.remote_addr.replace('.', '_')
+#         data = request.get_json()
+#         character = data.get('character')  # No default value here
+#         selected_language = data.get('language', 'en-US')
+        
+#         if not character:
+#             return jsonify({"error": "No character specified"}), 400
+#         if not selected_language:
+#             return jsonify({"error": "No language selected"}), 400
+
+#         timestamp = str(time.time_ns())
+#         user_input_id = f"user_input_{timestamp}"
+#         recorded_audio_path = f"{UPLOAD_FOLDER}/recorded_audio_{timestamp}.wav"
+        
+#         print(f"Recording audio to {recorded_audio_path}...")
+#         recording_successful = record_audio(recorded_audio_path, max_duration=15, silence_threshold=500, silence_duration=2.0)
+        
+#         if not recording_successful:
+#             return jsonify({"error": "No speech detected or recording failed"}), 400
+        
+#         recorded_blob_path = f"audio/{ip_address}_{character}/recorded_audio_{timestamp}.wav"
+#         recorded_blob = bucket.blob(recorded_blob_path)
+#         recorded_blob.upload_from_filename(recorded_audio_path)
+#         recorded_blob.make_public()
+#         recorded_audio_url = recorded_blob.public_url
+#         print(f"Uploaded recorded audio to {recorded_blob_path}: {recorded_audio_url}")
+
+#         transcript = transcribe_audio(recorded_audio_path, language=selected_language)
+#         if not transcript:
+#             return jsonify({"error": "Transcription failed or no speech detected"}), 500
+#         print(f"Transcription successful: '{transcript}'")
+
+#         target_language = selected_language.split("-")[0]
+#         transcript_en = translate_text(transcript, "en")
+#         response_en = get_character_response(transcript_en, "en-US", character)
+#         if "Error" in response_en:
+#             return jsonify({"error": f"Failed to get response: {response_en}"}), 500
+
+#         response = translate_text(response_en, target_language)
+#         synthesized_audio_path = f"{UPLOAD_FOLDER}/synthesized_audio_{timestamp}.mp3"
+#         text_to_speech(response, selected_language, character, synthesized_audio_path)
+#         print(f"Synthesized audio saved to {synthesized_audio_path}")
+
+#         synthesized_blob_path = f"audio/{ip_address}_{character}/synthesized_audio_{timestamp}.mp3"
+#         synthesized_blob = bucket.blob(synthesized_blob_path)
+#         synthesized_blob.upload_from_filename(synthesized_audio_path)
+#         synthesized_blob.make_public()
+#         synthesized_audio_url = synthesized_blob.public_url
+#         print(f"Uploaded synthesized audio to {synthesized_blob_path}: {synthesized_audio_url}")
+
+#         conversation_ref = db.collection(f"{ip_address}_{character}")
+#         conversation_ref.add({
+#             'user_input_id': user_input_id,
+#             'timestamp': firestore.SERVER_TIMESTAMP,
+#             'user_input': transcript,
+#             'response': response,
+#             'character': character,
+#             'selected_language': selected_language,
+#             'recorded_audio_url': recorded_audio_url,
+#             'synthesized_audio_url': synthesized_audio_url
+#         })
+
+#         conversation = [doc.to_dict() for doc in conversation_ref.order_by('timestamp').stream()]
+        
+#         return jsonify({
+#             "transcript": transcript,
+#             "response": response,
+#             "character": character,
+#             "selected_language": selected_language,
+#             "recorded_audio_url": recorded_audio_url,
+#             "synthesized_audio_url": synthesized_audio_url,
+#             "conversation": conversation
+#         })
+#     except Exception as e:
+#         import traceback
+#         print(f"Error in process_audio: {str(e)}")
+#         print(traceback.format_exc())
+#         return jsonify({"error": str(e)}), 500
+#     finally:
+#         if recorded_audio_path and os.path.exists(recorded_audio_path):
+#             os.remove(recorded_audio_path)
+#         if synthesized_audio_path and os.path.exists(synthesized_audio_path):
+#             os.remove(synthesized_audio_path)
+
 @app.route('/process_audio', methods=['POST'])
 def process_audio():
     recorded_audio_path = None
     synthesized_audio_path = None
     try:
         ip_address = request.remote_addr.replace('.', '_')
-        data = request.get_json()
-        character = data.get('character')  # No default value here
-        selected_language = data.get('language', 'en-US')
+        character = request.form.get('character')
+        selected_language = request.form.get('language', 'en-US')
         
         if not character:
             return jsonify({"error": "No character specified"}), 400
         if not selected_language:
             return jsonify({"error": "No language selected"}), 400
 
+        if 'audio' not in request.files:
+            return jsonify({"error": "No audio file provided"}), 400
+
         timestamp = str(time.time_ns())
         user_input_id = f"user_input_{timestamp}"
         recorded_audio_path = f"{UPLOAD_FOLDER}/recorded_audio_{timestamp}.wav"
         
-        print(f"Recording audio to {recorded_audio_path}...")
-        recording_successful = record_audio(recorded_audio_path, max_duration=15, silence_threshold=500, silence_duration=2.0)
-        
-        if not recording_successful:
-            return jsonify({"error": "No speech detected or recording failed"}), 400
-        
+        # Save the uploaded audio file
+        audio_file = request.files['audio']
+        audio_file.save(recorded_audio_path)
+        print(f"Received and saved audio to {recorded_audio_path}")
+
         recorded_blob_path = f"audio/{ip_address}_{character}/recorded_audio_{timestamp}.wav"
         recorded_blob = bucket.blob(recorded_blob_path)
         recorded_blob.upload_from_filename(recorded_audio_path)
