@@ -76,98 +76,6 @@ function addMessage(content, isUser, character = selectedCharacter, audioUrl = n
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// recordButton.addEventListener('click', async function recordHandler() {
-//     // Check if already recording
-//     if (recordButton.dataset.recording === 'true') {
-//         // Second click: stop recording
-//         const mediaRecorder = recordButton.mediaRecorder;
-//         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-//             mediaRecorder.stop();
-//         }
-//         return;
-//     }
-
-//     // First click: start recording
-//     recordButton.disabled = true;
-//     recordButton.dataset.recording = 'true';
-//     recordingStatus.textContent = 'Recording...';
-//     recordingStatus.style.display = 'block';
-//     errorDiv.style.display = 'none';
-//     const loadingDiv = await showLoading(true);
-
-//     let mediaRecorder;
-//     let audioChunks = [];
-
-//     try {
-//         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-//         mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-//         recordButton.mediaRecorder = mediaRecorder; // Store for second click
-
-//         mediaRecorder.ondataavailable = (event) => {
-//             audioChunks.push(event.data);
-//         };
-
-//         mediaRecorder.onstop = async () => {
-//             // Update UI to show "Processing"
-//             removeLoading(loadingDiv);
-//             const processingDiv = await showLoading(false); // Show "Processing..." after recording stops
-
-//             const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-//             const formData = new FormData();
-//             formData.append('audio', audioBlob, `recorded_audio_${Date.now()}.webm`);
-//             formData.append('character', selectedCharacter);
-//             formData.append('language', languageSelect.value);
-
-//             try {
-//                 const response = await fetch('/process_audio', {
-//                     method: 'POST',
-//                     body: formData
-//                 });
-
-//                 const data = await response.json();
-
-//                 if (response.ok) {
-//                     addMessage(data.transcript, true, data.character, data.recorded_audio_url);
-//                     addMessage(data.response, false, data.character, data.synthesized_audio_url);
-//                 } else {
-//                     errorDiv.textContent = data.error || 'An error occurred while processing the audio.';
-//                     errorDiv.style.display = 'block';
-//                 }
-//             } catch (err) {
-//                 errorDiv.textContent = 'An error occurred: ' + err.message;
-//                 errorDiv.style.display = 'block';
-//             } finally {
-//                 removeLoading(processingDiv);
-//                 recordButton.disabled = false;
-//                 recordButton.dataset.recording = 'false';
-//                 delete recordButton.mediaRecorder; // Clean up
-//                 recordingStatus.textContent = '';
-//                 recordingStatus.style.display = 'none';
-//                 recordButton.innerHTML = '<img src="/static/mic_button.png" alt="Record" class="button-icon">';
-//                 stream.getTracks().forEach(track => track.stop());
-//             }
-//         };
-
-//         mediaRecorder.start();
-//         recordingStatus.textContent = 'Recording... (Click again to stop)';
-
-//         // Auto-stop after 15 seconds if not stopped manually
-//         setTimeout(() => {
-//             if (mediaRecorder.state !== 'inactive') {
-//                 mediaRecorder.stop();
-//             }
-//         }, 15000);
-
-//     } catch (err) {
-//         errorDiv.textContent = 'Microphone access denied or unavailable: ' + err.message;
-//         errorDiv.style.display = 'block';
-//         removeLoading(loadingDiv);
-//         recordButton.disabled = false;
-//         recordButton.dataset.recording = 'false';
-//         recordingStatus.textContent = '';
-//         recordingStatus.style.display = 'none';
-//     }
-// });
 recordButton.addEventListener('click', async function recordHandler() {
     // Check if already recording
     if (recordButton.dataset.recording === 'true') {
@@ -175,7 +83,6 @@ recordButton.addEventListener('click', async function recordHandler() {
         const mediaRecorder = recordButton.mediaRecorder;
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
             mediaRecorder.stop();
-            clearTimeout(recordButton.timeoutId); // Clear the 15-second timeout
         }
         return;
     }
@@ -183,7 +90,7 @@ recordButton.addEventListener('click', async function recordHandler() {
     // First click: start recording
     recordButton.disabled = true;
     recordButton.dataset.recording = 'true';
-    recordingStatus.textContent = 'Recording... (Click again to stop)';
+    recordingStatus.textContent = 'Recording...';
     recordingStatus.style.display = 'block';
     errorDiv.style.display = 'none';
     const loadingDiv = await showLoading(true);
@@ -194,19 +101,16 @@ recordButton.addEventListener('click', async function recordHandler() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-        recordButton.mediaRecorder = mediaRecorder;
+        recordButton.mediaRecorder = mediaRecorder; // Store for second click
 
         mediaRecorder.ondataavailable = (event) => {
             audioChunks.push(event.data);
         };
 
         mediaRecorder.onstop = async () => {
-            // Clean up stream
-            stream.getTracks().forEach(track => track.stop());
-            
             // Update UI to show "Processing"
             removeLoading(loadingDiv);
-            const processingDiv = await showLoading(false);
+            const processingDiv = await showLoading(false); // Show "Processing..." after recording stops
 
             const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
             const formData = new FormData();
@@ -234,13 +138,21 @@ recordButton.addEventListener('click', async function recordHandler() {
                 errorDiv.style.display = 'block';
             } finally {
                 removeLoading(processingDiv);
-                resetRecordingState();
+                recordButton.disabled = false;
+                recordButton.dataset.recording = 'false';
+                delete recordButton.mediaRecorder; // Clean up
+                recordingStatus.textContent = '';
+                recordingStatus.style.display = 'none';
+                recordButton.innerHTML = '<img src="/static/mic_button.png" alt="Record" class="button-icon">';
+                stream.getTracks().forEach(track => track.stop());
             }
         };
 
         mediaRecorder.start();
-        // Set 15-second timeout
-        recordButton.timeoutId = setTimeout(() => {
+        recordingStatus.textContent = 'Recording... (Click again to stop)';
+
+        // Auto-stop after 15 seconds if not stopped manually
+        setTimeout(() => {
             if (mediaRecorder.state !== 'inactive') {
                 mediaRecorder.stop();
             }
@@ -250,19 +162,13 @@ recordButton.addEventListener('click', async function recordHandler() {
         errorDiv.textContent = 'Microphone access denied or unavailable: ' + err.message;
         errorDiv.style.display = 'block';
         removeLoading(loadingDiv);
-        resetRecordingState();
+        recordButton.disabled = false;
+        recordButton.dataset.recording = 'false';
+        recordingStatus.textContent = '';
+        recordingStatus.style.display = 'none';
     }
 });
 
-function resetRecordingState() {
-    recordButton.disabled = false;
-    recordButton.dataset.recording = 'false';
-    delete recordButton.mediaRecorder;
-    delete recordButton.timeoutId;
-    recordingStatus.textContent = '';
-    recordingStatus.style.display = 'none';
-    recordButton.innerHTML = '<img src="/static/mic_button.png" alt="Record" class="button-icon">';
-}
 sendButton.addEventListener('click', async () => {
     const text = textInput.value.trim();
     if (!text) return;
