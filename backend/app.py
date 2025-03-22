@@ -9,7 +9,7 @@ from firebase_admin import credentials, firestore, storage
 from transcribe_audio import transcribe_audio
 from tts import text_to_speech, translate_text
 from gemini_api import get_character_response
-from firebase import cred
+from firebase_creds import cred
 import subprocess
 
 app = Flask(__name__)
