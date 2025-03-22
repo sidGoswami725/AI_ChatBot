@@ -1,4 +1,4 @@
-# Character Chatbot
+# DALL-BOT
 
 A Flask-based interactive chatbot application that lets users engage in conversations with AI-powered characters through text or voice inputs.
 
@@ -52,7 +52,7 @@ FIREBASE_CREDENTIALS=path/to/your/firebase-credentials.json
 FIREBASE_STORAGE_BUCKET=your-firebase-bucket-name  
 GOOGLE_CLOUD_PROJECT=your-google-cloud-project  
 
-### 5. Set Up Google Cloud Credentials
+### 4. Set Up Google Cloud Credentials
    - Go to [Google Cloud Console](https://console.cloud.google.com).
 
    - Create a project or use an existing one.
@@ -66,7 +66,7 @@ GOOGLE_CLOUD_PROJECT=your-google-cloud-project
    - Place the JSON file in your project directory and update `FIREBASE_CREDENTIALS` in `.env` with its path.
 
 
-### 6. Set Up Firebase
+### 5. Set Up Firebase
    - Visit [Firebase Console](https://console.firebase.google.com).
 
    - Create a new project (e.g., `character-chat-app`).
@@ -80,13 +80,13 @@ GOOGLE_CLOUD_PROJECT=your-google-cloud-project
    - Copy your storage bucket name from "Storage" (e.g., `your-project-id.appspot.com`) and set it as `FIREBASE_STORAGE_BUCKET`.
 
 
-### 7. Obtain a Gemini API Key
+### 6. Obtain a Gemini API Key
 
    - Sign up for access to the Gemini API (check the provider’s official site for details).
    - Generate an API key and add it to `.env` as `API_KEY`.
 
 
-### 8. Install FFmpeg
+### 7. Install FFmpeg
 
      - FFmpeg is required for audio conversion. Install it based on your OS:
      - On macOS:
@@ -104,14 +104,14 @@ GOOGLE_CLOUD_PROJECT=your-google-cloud-project
        ffmpeg -version
    
 
-### 9. Verify Setup
+### 8. Verify Setup
 
 
     - Ensure all dependencies are installed (`pip list` should show `flask`, `google-cloud-speech`, etc.).
    - Check that `.env` is correctly configured and service account JSONs are accessible.
 
 
-### 10. Render Setup
+### 9. Render Setup
    - Sign up for a Render account at [Render](render.com)
 
     - Create a new Web Service and connect your GitHub repository.
@@ -202,5 +202,4 @@ GOOGLE_CLOUD_PROJECT=your-google-cloud-project
 ## Credits
  Developed by **DALL-Eminators**.
 
-## License
- MIT License.
+
